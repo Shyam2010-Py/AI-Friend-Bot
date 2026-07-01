@@ -1,0 +1,25 @@
+# ============================================
+# AI Friend Bot v2.4 — Internet & Utility Edition
+# Python Dependencies
+# ============================================
+# Minimum Python version: 3.10+ (tested on 3.13)
+#
+# The bot uses mostly no-auth free APIs:
+#   - DuckDuckGo (search)
+#   - Open-Meteo (weather)
+#   - JokeAPI (jokes)
+#   - ZenQuotes (quotes)
+#   - rss2json (news fallback)
+# Optional API keys for premium sources are in .env.example
+
+# --- Core ---
+discord.py>=2.3.0
+requests>=2.31.0
+python-dotenv>=1.0.0
+
+# --- Optional but recommended ---
+# All these are part of the Python standard library:
+# - zoneinfo (timezone handling, Python 3.9+)
+# - math (calculator)
+# - datetime (date/time)
+# - random (not currently used)
