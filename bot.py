@@ -1,14 +1,14 @@
-# ==========================================================
-# AI Friend Bot v4.0 — Moderation System Edition
-# Author: [Your Name]
-# Description:
-#   Discord bot with AI chat (with memory) and a full
-#   moderation system. Includes user/server info, uptime,
-#   ping, and Architect-only mod commands.
-#
-# Compatible with: Python 3.13, discord.py 2.3+
-# Secrets loaded from .env (see .env.example).
-# ==========================================================
+
+
+
+
+
+
+
+
+
+
+
 
 import os
 import re
@@ -23,9 +23,9 @@ from dotenv import load_dotenv
 from discord.ext import commands
 from discord import app_commands
 
-# ==========================
-# LOAD ENVIRONMENT VARIABLES
-# ==========================
+
+
+
 
 env_path = Path(__file__).parent / ".env"
 load_dotenv(dotenv_path=env_path)
@@ -47,47 +47,47 @@ if not API_KEY:
         "   Create a .env file with: OPENROUTER_API_KEY=your_key_here"
     )
 
-# ==========================
-# CONFIGURATION
-# ==========================
+
+
+
 
 MODEL = "openai/gpt-oss-120b:free"
 
 START_TIME = datetime.datetime.now(datetime.timezone.utc)
 EMBED_COLOR = discord.Color.blue()
 
-# Cooldown for /ask
+
 ASK_COOLDOWN = 10
 cooldowns = {}
 
-# ==========================
-# CHAT MEMORY CONFIGURATION
-# ==========================
+
+
+
 
 MAX_MEMORY_EXCHANGES = 5
 MEMORY_TIMEOUT = 30 * 60  # 30 minutes
 chat_memory = {}
 
-# ==========================
-# MODERATION DATA (v4.0 NEW)
-# ==========================
+
+
+
 
 DATA_DIR = Path(__file__).parent / "data"
 DATA_DIR.mkdir(exist_ok=True)  # Create data/ if missing
 MOD_DATA_FILE = DATA_DIR / "moderation.json"
 
-# Structure:
-# {
-#   "<guild_id>": {
-#       "architect_role_id": <int or null>,
-#       "log_channel_id": <int or null>,
-#       "warnings": {
-#           "<user_id>": [
-#               {"reason": str, "moderator_id": int, "timestamp": str}
-#           ]
-#       }
-#   }
-# }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 def load_mod_data() -> dict:
@@ -111,7 +111,7 @@ def save_mod_data(data: dict):
         print(f"❌ Failed to save mod data: {e}")
 
 
-# Load on startup
+
 mod_data = load_mod_data()
 
 
@@ -124,16 +124,16 @@ def get_guild_data(guild_id: int) -> dict:
             "log_channel_id": None,
             "warnings": {}
         }
-    # Ensure all keys exist (forward-compat)
+
     mod_data[gid].setdefault("architect_role_id", None)
     mod_data[gid].setdefault("log_channel_id", None)
     mod_data[gid].setdefault("warnings", {})
     return mod_data[gid]
 
 
-# ==========================
-# DISCORD SETUP
-# ==========================
+
+
+
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -144,9 +144,9 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 bot.remove_command("help")
 
 
-# ==========================
-# HELPER FUNCTIONS
-# ==========================
+
+
+
 
 def create_embed(title: str, description: str = "", color=None) -> discord.Embed:
     """Create a standardized embed with consistent styling."""
@@ -165,9 +165,9 @@ def split_message(text: str, limit: int = 1900) -> list:
     return [text[i:i + limit] for i in range(0, len(text), limit)]
 
 
-# ==========================
-# COOLDOWN HELPER
-# ==========================
+
+
+
 
 def check_ask_cooldown(user_id: int) -> tuple[bool, float]:
     """Check if a user is on cooldown for /ask."""
@@ -180,9 +180,9 @@ def check_ask_cooldown(user_id: int) -> tuple[bool, float]:
     return True, 0
 
 
-# ==========================
-# CHAT MEMORY HELPERS
-# ==========================
+
+
+
 
 def get_user_memory(user_id: int) -> dict:
     """Get or create a user's chat memory."""
@@ -223,9 +223,9 @@ def get_memory_stats(user_id: int) -> dict:
     return {"exchanges": exchanges, "age_seconds": age}
 
 
-# ==========================
-# MODERATION HELPERS (v4.0 NEW)
-# ==========================
+
+
+
 
 def is_owner(member: discord.Member) -> bool:
     """Check if member is the server owner."""
@@ -253,21 +253,21 @@ def can_moderate(actor: discord.Member, target: discord.Member) -> tuple[bool, s
     Check if `actor` can moderate `target` based on role hierarchy.
     Returns (allowed, reason_if_not).
     """
-    # Server owner cannot be moderated
+
     if target.id == target.guild.owner_id:
         return False, "🚫 Cannot moderate the **server owner**."
 
-    # The bot itself cannot be moderated by this bot
+
     if target.id == bot.user.id:
         return False, "🚫 Cannot moderate **myself**."
 
-    # Actor must outrank target
+
     if actor.top_role.position <= target.top_role.position and actor.id != target.guild.owner_id:
         return False, (
             f"🚫 You cannot moderate {target.mention} — they have an **equal or higher role** than you."
         )
 
-    # Bot must outrank target (to perform the action)
+
     if bot.user.id != target.guild.owner_id:
         bot_top = target.guild.me.top_role
         if bot_top.position <= target.top_role.position:
@@ -351,9 +351,9 @@ async def try_dm_user(user: discord.abc.User, embed: discord.Embed) -> bool:
         return False
 
 
-# ==========================
-# OPENROUTER API CALLER
-# ==========================
+
+
+
 
 async def call_openrouter(prompt: str, system: str = None, history: list = None, max_retries: int = 2) -> str:
     """Call OpenRouter API with a prompt and optional system message + conversation history."""
@@ -400,9 +400,9 @@ async def call_openrouter(prompt: str, system: str = None, history: list = None,
     return "❌ Failed after multiple attempts."
 
 
-# ==========================
-# EVENTS
-# ==========================
+
+
+
 
 @bot.event
 async def on_ready():
@@ -416,9 +416,9 @@ async def on_ready():
     print(f"✅ Logged in as {bot.user} (ID: {bot.user.id})")
 
 
-# ==========================================================
-# AI COMMANDS
-# ==========================================================
+
+
+
 
 @bot.tree.command(name="hello", description="Send a friendly greeting")
 async def slash_hello(interaction: discord.Interaction):
@@ -517,9 +517,9 @@ async def slash_forget(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
-# ==========================================================
-# INFO COMMANDS
-# ==========================================================
+
+
+
 
 @bot.tree.command(name="help", description="Show all available bot commands")
 async def slash_help(interaction: discord.Interaction):
@@ -646,9 +646,9 @@ async def slash_uptime(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed)
 
 
-# ==========================================================
-# MODERATION SETUP (v4.0 NEW) — OWNER ONLY
-# ==========================================================
+
+
+
 
 @bot.tree.command(name="setarchitect", description="[OWNER] Set the Architect role that can use mod commands")
 @app_commands.describe(role="The role to grant moderation access to")
@@ -672,7 +672,7 @@ async def slash_setarchitect(interaction: discord.Interaction, role: discord.Rol
     )
     await interaction.response.send_message(embed=embed)
 
-    # Log it
+
     log_embed = create_embed(
         title="⚙️ Architect Role Configured",
         description=f"**Role:** {role.mention} (`{role.id}`)\n**Set by:** {interaction.user.mention}",
@@ -691,7 +691,7 @@ async def slash_setlog(interaction: discord.Interaction, channel: discord.TextCh
         )
         return
 
-    # Check bot can send in the channel
+
     if not channel.permissions_for(interaction.guild.me).send_messages:
         await interaction.response.send_message(
             f"❌ I don't have permission to send messages in {channel.mention}.",
@@ -710,7 +710,7 @@ async def slash_setlog(interaction: discord.Interaction, channel: discord.TextCh
     )
     await interaction.response.send_message(embed=embed)
 
-    # Send a test log
+
     log_embed = create_embed(
         title="📝 Mod Log Channel Configured",
         description=f"**Channel:** {channel.mention}\n**Set by:** {interaction.user.mention}",
@@ -719,11 +719,11 @@ async def slash_setlog(interaction: discord.Interaction, channel: discord.TextCh
     await send_mod_log(interaction.guild, log_embed)
 
 
-# ==========================================================
-# MODERATION COMMANDS (v4.0 NEW) — OWNER + ARCHITECT
-# ==========================================================
 
-# ---- /warn ----
+
+
+
+
 @bot.tree.command(name="warn", description="Issue a warning to a user")
 @app_commands.describe(user="The user to warn", reason="Reason for the warning")
 async def slash_warn(interaction: discord.Interaction, user: discord.Member, reason: str = "No reason provided"):
@@ -739,7 +739,7 @@ async def slash_warn(interaction: discord.Interaction, user: discord.Member, rea
         await interaction.response.send_message(msg, ephemeral=True)
         return
 
-    # Store warning
+
     guild_data = get_guild_data(interaction.guild.id)
     user_id = str(user.id)
     guild_data["warnings"].setdefault(user_id, [])
@@ -761,7 +761,7 @@ async def slash_warn(interaction: discord.Interaction, user: discord.Member, rea
     )
     await interaction.response.send_message(embed=embed)
 
-    # DM the user
+
     dm_embed = create_embed(
         title=f"⚠️ You were warned in {interaction.guild.name}",
         description=f"**Reason:** {reason}\n"
@@ -771,7 +771,7 @@ async def slash_warn(interaction: discord.Interaction, user: discord.Member, rea
     )
     await try_dm_user(user, dm_embed)
 
-    # Log it
+
     log_embed = create_embed(
         title="⚠️ Warn",
         description=f"**User:** {user.mention} (`{user.id}`)\n"
@@ -783,7 +783,7 @@ async def slash_warn(interaction: discord.Interaction, user: discord.Member, rea
     await send_mod_log(interaction.guild, log_embed)
 
 
-# ---- /warnings ----
+
 @bot.tree.command(name="warnings", description="List warnings for a user (defaults to yourself)")
 @app_commands.describe(user="The user to check (defaults to you)")
 async def slash_warnings(interaction: discord.Interaction, user: discord.Member = None):
@@ -800,7 +800,7 @@ async def slash_warnings(interaction: discord.Interaction, user: discord.Member 
     if not warnings:
         embed.description += "\n✨ No warnings on record. Clean slate!"
     else:
-        # Show up to 10 most recent
+
         for i, w in enumerate(warnings[-10:], 1):
             try:
                 mod_user = await interaction.guild.fetch_member(w["moderator_id"])
@@ -818,7 +818,7 @@ async def slash_warnings(interaction: discord.Interaction, user: discord.Member 
     await interaction.response.send_message(embed=embed)
 
 
-# ---- /clearwarnings ----
+
 @bot.tree.command(name="clearwarnings", description="Clear all warnings for a user")
 @app_commands.describe(user="The user whose warnings to clear", reason="Reason for clearing")
 async def slash_clearwarnings(interaction: discord.Interaction, user: discord.Member, reason: str = "No reason provided"):
@@ -859,7 +859,7 @@ async def slash_clearwarnings(interaction: discord.Interaction, user: discord.Me
     await send_mod_log(interaction.guild, log_embed)
 
 
-# ---- /timeout ----
+
 @bot.tree.command(name="timeout", description="Timeout a user for a specified duration")
 @app_commands.describe(
     user="The user to timeout",
@@ -942,7 +942,7 @@ async def slash_timeout(interaction: discord.Interaction, user: discord.Member, 
     await send_mod_log(interaction.guild, log_embed)
 
 
-# ---- /untimeout ----
+
 @bot.tree.command(name="untimeout", description="Remove a timeout from a user")
 @app_commands.describe(user="The user to remove timeout from", reason="Reason for removing timeout")
 async def slash_untimeout(interaction: discord.Interaction, user: discord.Member, reason: str = "No reason provided"):
@@ -996,7 +996,7 @@ async def slash_untimeout(interaction: discord.Interaction, user: discord.Member
     await send_mod_log(interaction.guild, log_embed)
 
 
-# ---- /kick ----
+
 @bot.tree.command(name="kick", description="Kick a user from the server")
 @app_commands.describe(user="The user to kick", reason="Reason for the kick")
 async def slash_kick(interaction: discord.Interaction, user: discord.Member, reason: str = "No reason provided"):
@@ -1012,7 +1012,7 @@ async def slash_kick(interaction: discord.Interaction, user: discord.Member, rea
         await interaction.response.send_message(msg, ephemeral=True)
         return
 
-    # DM before kick (user is still in the guild)
+
     dm_embed = create_embed(
         title=f"👢 You were kicked from {interaction.guild.name}",
         description=f"**Reason:** {reason}\n"
@@ -1053,7 +1053,7 @@ async def slash_kick(interaction: discord.Interaction, user: discord.Member, rea
     await send_mod_log(interaction.guild, log_embed)
 
 
-# ---- /ban ----
+
 @bot.tree.command(name="ban", description="Ban a user from the server")
 @app_commands.describe(
     user="The user to ban",
@@ -1080,7 +1080,7 @@ async def slash_ban(interaction: discord.Interaction, user: discord.Member, days
         )
         return
 
-    # DM before ban
+
     dm_embed = create_embed(
         title=f"🔨 You were banned from {interaction.guild.name}",
         description=f"**Reason:** {reason}",
@@ -1122,7 +1122,7 @@ async def slash_ban(interaction: discord.Interaction, user: discord.Member, days
     await send_mod_log(interaction.guild, log_embed)
 
 
-# ---- /unban ----
+
 @bot.tree.command(name="unban", description="Unban a user by their ID")
 @app_commands.describe(user_id="The ID of the user to unban", reason="Reason for the unban")
 async def slash_unban(interaction: discord.Interaction, user_id: str, reason: str = "No reason provided"):
@@ -1133,7 +1133,7 @@ async def slash_unban(interaction: discord.Interaction, user_id: str, reason: st
         )
         return
 
-    # Validate ID
+
     try:
         uid = int(user_id)
     except ValueError:
@@ -1143,7 +1143,7 @@ async def slash_unban(interaction: discord.Interaction, user_id: str, reason: st
         )
         return
 
-    # Check if banned
+
     try:
         await interaction.guild.fetch_ban(discord.Object(id=uid))
     except discord.NotFound:
@@ -1187,7 +1187,7 @@ async def slash_unban(interaction: discord.Interaction, user_id: str, reason: st
     await send_mod_log(interaction.guild, log_embed)
 
 
-# ---- /purge ----
+
 @bot.tree.command(name="purge", description="Bulk delete messages (optionally from a specific user)")
 @app_commands.describe(
     amount="Number of messages to delete (1-100)",
@@ -1216,9 +1216,9 @@ async def slash_purge(interaction: discord.Interaction, amount: int, user: disco
         return True
 
     try:
-        # +1 to account for the command message itself
+
         deleted = await interaction.channel.purge(limit=amount + 1, check=check)
-        # Subtract 1 because the command message is included
+
         actual_deleted = len(deleted) - 1
     except discord.Forbidden:
         await interaction.followup.send(
@@ -1248,9 +1248,9 @@ async def slash_purge(interaction: discord.Interaction, amount: int, user: disco
     await send_mod_log(interaction.guild, log_embed)
 
 
-# ==========================================================
-# GLOBAL ERROR HANDLERS
-# ==========================================================
+
+
+
 
 @bot.tree.error
 async def on_app_command_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
@@ -1275,8 +1275,8 @@ async def on_app_command_error(interaction: discord.Interaction, error: app_comm
         await send_method(f"❌ An error occurred: {error}", ephemeral=True)
 
 
-# ==========================
-# RUN
-# ==========================
+
+
+
 
 bot.run(TOKEN)
